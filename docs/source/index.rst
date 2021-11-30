@@ -160,22 +160,28 @@ Results
 
    WordFreq.get_freq --> wordfreqCMD.sort_in_descending_order
    WordFreq.get_freq --> wordfreqCMD.sremove_punctuation
-3.Pros and cons of the current architecture of EnglishPal: 
-    Disadvantages: 
-     1)The speed of transferring picture or other media information between web pages is low. 
-     
-     2)The server processes multiple requests at the same time, which reduces the operation efficiency. 
-     
-     3)Code change and maintenance are difficult. 
+   
+
+3.Pros and cons of the current architecture of EnglishPal
+
+Disadvantages: 
+
+1)The speed of transferring picture or other media information between web pages is low. 
+
+2)The server processes multiple requests at the same time, which reduces the operation efficiency. 
+
+3)Code change and maintenance are difficult. 
+
       
-    Advantages: 
-      1)API has high security. 
-      
-      2)Using syntax similar to the pattern for development makes the code readable. 
-      
-      3)Simple crud and small code base are suitable for smaller projects. 
-      
-      4)There is less communication between the front end and the back end, reducing the communication cost. 
+Advantages: 
+
+1)API has high security. 
+
+2)Using syntax similar to the pattern for development makes the code readable. 
+
+3)Simple crud and small code base are suitable for smaller projects. 
+
+4)There is less communication between the front end and the back end, reducing the communication cost. 
       
 
 Discussions
