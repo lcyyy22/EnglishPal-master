@@ -161,6 +161,8 @@ Results
    WordFreq.get_freq --> wordfreqCMD.sort_in_descending_order
    WordFreq.get_freq --> wordfreqCMD.sremove_punctuation
    
+.. image:: method.png
+
 
 3.Pros and cons of the current architecture of EnglishPal
 
