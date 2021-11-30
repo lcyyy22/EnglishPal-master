@@ -7,6 +7,8 @@ Date：2021/5/17
 
 Abstract
 --------
+Do search on the denpencies of EnglishPal-master,to help us learn the code architecture well.
+We use snakefood to generate the module-level dependency graph,and mermaid to help generate class/function-level dependency.
 
 Introduction
 --------
