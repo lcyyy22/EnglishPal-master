@@ -81,88 +81,61 @@ Results
 
 ::
 
-      graph LR
-      total_number_of_essays -->UseSqlite.RecordQuery
-      load_freq_history -->pickle_idea.load_record
-      verify_user --> UseSqlite.RecordQuery
-      add_user -->UseSqlite.InsertQuery
-      check_username_availability --> UseSqlite.RecordQuery
-      get_expiry_date -->UseSqliteRecordQuery
-      get_today_article --> UseSqlite.RecordQuery
-      get_today_article --> load_freq_history
-      get_today_article --> difficulty.get_difficulty_level
-      get_today_article --> difficulty.user_difficulty_level
-      get_today_article -->random.shuffle
-      get_today_article -->random.choice
-      get_today_article -->random.gauss
-      get_today_article -->get_article_title
-      get_today_article -->get_article_body
-      get_today_article --> difficulty.text_difficulty_level
-      get_today_article --> within_range
-      get_today_article --> get_answer_part
-      get_today_article -->get_question_part
-     get_flashed_messages_if_any --> get_flashed_messages	
-      mark_word --> load_freq_history
-      mark_word --> pickle_idea.dict2lst
-      mark_word --> pickle_idea.merge_frequency
-      mark_word --> pickle_idea.save_frequency_to_pickle
-      mainpage --> WordFreq
-      mainpage --> load_freq_history
-      mainpage --> pickle_idea.dict2lst
-      mainpage --> pickle_idea.merge_frequency
-      mainpage --> pickle_idea.save_frequency_to_pickle
-      mainpage --> pickle_idea.dict2lst
-      user_mark_word --> load_freq_history
-      user_mark_word -->pickle_idea2.dict2lst
-      user_mark_word -->pickle_idea2.merge_frequency
-      user_mark_word -->pickle_idea2.save_frequency_to_pickle
-      unfamiliar -->pickle_idea.unfamiliar
-      familiar -->pickle_idea.familiar
-      deleteword -->pickle_idea2.deleteRecord
-      userpage --> WordFreq
-      userpage --> pickle_idea.load_record
-      userpage --> load_freq_history
-      userpage --> sort_in_descending_order
-      userpage -->get_flashed_messages_if_any
-      userpage -->get_today_article
-      userpage -->load_freq_history
-      userpage -->pickle_idea2.dict2lst
-      signup --> check_username_availability
-      signup --> render_template
-      signup --> add_user
-      signup --> verify_user
-      login --> render_template
-      login --> verify_user
-      login -->get_expiry_date
-
-      difficulty.load_record --> pickle.load
-      difficulty.get_difficulty_level -->difficulty.difficulty_level_from_frequency
-      difficulty.user_difficulty_level -->wordfreqCMD.sort_in_ascending_order
-      difficulty.text_difficulty_level -->wordfreqCMD.remove_punctuation
-      difficulty.text_difficulty_level -->wordfreqCMD.sort_in_descending_order
-      difficulty.text_difficulty_level -->difficulty.load_record
-      difficulty.text_difficulty_level -->difficulty.get_difficulty_level
-
-      pickle_idea.merge_frequency --> pickle_idea.lst2dict
-      pickle_idea.load_record -->pickle.load
-      pickle_idea.save_frequency_to_pickle -->pickle.dump
-      pickle_idea.familiar -->pickle.load
-      pickle_idea.familiar -->pickle.dump
-      pickle_idea.familiar -->pickle_idea.save_frequency_to_pickle
-      pickle_idea.familiar -->pickle_idea.load_record
-      pickle_idea.familiar -->pickle_idea.merge_frequency
-
-      pickle_idea2.merge_frequency --> pickle_idea2.lst2dict
-      pickle_idea2.save_frequency_to_pickle--> pickle_idea2.merge_frequency
-
-      Sqlite3Template.do --> Sqlite3Template.connect
-      Sqlite3Template.do --> Sqlite3Template.instructions
-      Sqlite3Template.do --> Sqlite3Template.operate
-
-      WordFreq.get_freq --> wordfreqCMD.sort_in_descending_order
-      WordFreq.get_freq --> wordfreqCMD.sremove_punctuation
+      classDiagram
+      InsertQuery ..> Sqlite3Template
+      RecordQuery ..> Sqlite3Template
+      WordFreq ..> wordfreqCMD
+      main ..> InsertQuery
+      main ..> RecordQuery
+      main ..> WordFreq
+      main ..> difficulty
+      main ..> pickle_idea
+      main ..> pickle_idea2
+      main ..> wordfreqCMD
+      wordfreqCMD ..> pickle_idea
+      class main{
+      +total_number_of_essays()
+      +load_freq_history()
+      +verify_user()
+      +add_user()
+      +check_username_availability()
+      +get_expiry_date()
+      +get_today_article()
+      +get_flashed_messages()
+      +mark_word()
+      +mainpage()
+      +user_mark_word()
+      +unfamiliar()
+      +familiar()
+      +deleteword()
+      +userpage()
+      +signup()
+      +login()
+      }
+      class difficulty{
+       +load_record()
+       +difficulty.get_difficulty_level()
+       +difficulty.user_difficulty_level()
+       +difficulty.text_difficulty_level()
+      }
+      class pickle_idea{
+       +merge_frequency()
+       +load_record()
+       +save_frequency_to_pickle()
+       +familiar()
+      }
+      class pickle_idea2{
+       +merge_frequency()
+       +save_frequency_to_pickle()
+      }
+      class Sqlite3Template{
+       +do()
+      }
+      class WordFreq{
+       +get_freq()
+      }
    
-.. image:: method.png
+.. image:: class2.png
 
 
 3.Pros and cons of the current architecture of EnglishPal
