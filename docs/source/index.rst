@@ -1,279 +1,162 @@
-Use blueprints to architect a web application
+The ORM Magic and The Service Layer
 ===================================
 
 Author：201932110102，201932110101，201932110109，201932110108
 
-Date：2021/12/13
+Date：2021/12/25
+
+Abstract
+--------
+·Understand dependency inversion.
+
+·Map a class to a database table using SQLAlchemy’s ORM (object-relational mapper).
+
+·Implement a service layer for a user to read an article.
+
+·Practice Test-driven development (TDD).
+
+
+
+Introduction
+--------
+We are going to understand how to keep the domain model pure by following the principle of dependency inversion - let the infrastructure depend on the domain model, but not the other way around.
+Also, you are going to implement a service layer in services.py for EnglishPal, which provides a core service called read. This service would choose a suitable article for a user to read. The function read takes as input the following four arguments and returns an article ID if the user has been successfully assigned with an article to read.
+·user: a User object. The class User is defined in model.py. User has an important method called read article.
+·user repo: a UserRepository object. The class UserRepository is defined in repository.py.
+·article repo: an ArticleRepository object. The class ArticleRepository is defined in repository.py.
+·session: an SQLAlchemy session object.
+The function read(user, user repo, article repo, session) raises an UnknownUser exception if user does not have a correct user name or a correct password, or raises a NoArticleMatched exception if no article in the article repository, i.e., article repo, has a difficulty level matching the user’s vocabulary level. We say that an article’s difficulty level, La, matches a user’s vocabulary level, Lu, iff La > Lu. If more than one article satisfies La > Lu, then the one with the smallest La is chosen.
+An article’s difficulty level is recorded in the level field in the database table articles. A user’s vocabulary level is defined as the average value of top n most difficult words in the user’s list of new words (recorded in the database table newwords), where n is either 3 or the number of new words belonging to that user in the
+table newwords, whichever is smaller.
+For simplicity, we only consider the words in the following dictionary, where the values represent these words’difficulty levels.
+d = {’starbucks’:5, ’luckin’:4, ’secondcup’:4, ’costa’:3, ’timhortons’:3,’frappuccino’:6}
+
 
 Code
 --------
-1.upload.py： 
+1.orm.py： 
 ::
 
-     from flask import Blueprint
+# Software Architecture and Design Patterns -- Lab 3 starter code
+# Copyright (C) 2021 Hui Lan
 
-     upload_bp = Blueprint('upload', __name__)
+from sqlalchemy import Table, MetaData, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import mapper, relationship
+from sqlalchemy import create_engine
 
-     @upload_bp.route('/upload')
-     def upload():
-         page = '''<form action="/"method="post"enctype="multipart/form-data">
-                 <input type="file"name="file"><input name="description"><input type="submit"value="Upload"></form>'''
-         return page
+import model
 
-2.show.py:
+metadata = MetaData()
 
-::
-
-      from flask import Blueprint
-     from service import get_database_photos
-     show_bp = Blueprint('show', __name__)
-
-     @show_bp.route('/show')
-     def show():
-         page = get_database_photos()
-         return page
-
-
-3.search.py:
-
-::
-
-     from flask import Blueprint, request
-
-     from service import get_description_photos
-
-     search_bp = Blueprint('search', __name__)
+articles = Table(
+    'articles',
+    metadata,
+    Column('article_id', Integer, primary_key=True, autoincrement=True),
+    Column('text', String(10000)),
+    Column('source', String(100)),
+    Column('date', String(10)),
+    Column('level', Integer, nullable=False),
+    Column('question', String(1000)),
+    )
 
 
-     @search_bp.route('/search', methods=['POST', 'GET'])
-     def search():
-         page = '''<form action="/search/query-string"method="post"enctype="multipart/form-data">
-                     <input name="description"><input type="submit"value="search"></form>'''
-         return page
+users = Table(
+    'users',
+    metadata,
+    Column('username', String(100), primary_key=True),
+    Column('password', String(64)),
+    Column('start_date', String(10), nullable=False),
+    Column('expiry_date', String(10), nullable=False),
+    )
 
-     @search_bp.route('/search/query-string', methods=['POST', 'GET'])
-     def query_string():
-         if request.method == 'POST':
-             description = request.form['description']
-             page = get_description_photos(description)
+newwords = Table(
+    'newwords',
+    metadata,
+    Column('word_id', Integer, primary_key=True, autoincrement=True),
+    Column('username', String(100), ForeignKey('users.username')),
+    Column('word', String(20)),
+    Column('date', String(10)),
+    )
 
-         return page
-
-4.api.py:
-
-::
-      
-
-     import json
-     import os.path
-
-     from flask import Blueprint
-     from UseSqlite import RiskQuery
-
-     api_bp = Blueprint('api', __name__)
+readings = Table(
+    'readings',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('username', String(100), ForeignKey('users.username')),
+    Column('article_id', Integer, ForeignKey('articles.article_id')),
+    )
 
 
-     @api_bp.route('/api', methods=['POST', 'GET'])
-     def api_json():
-         rq = RiskQuery('./static/RiskDB.db')
-         rq.instructions("SELECT * FROM photo ORDER By time desc")
-         rq.do()
-         lst = []
-         page = ''
-         i = 1
-         for r in rq.format_results().split('\n\n'):
-             photo = r.split(',')
-             picture_time = photo[0]
-             picture_description = photo[1]
-             picture_path = photo[2].strip()
-             photo_size = str(format((os.path.getsize(picture_path) / 1024), '.2f')) + 'KB'
-             lst = [{'ID': i, 'upload_date': picture_time, 'description': picture_description, 'photo_size': photo_size}]
-             lst2 = json.dumps(lst[0], sort_keys=True, indent=4, separators=(',', ':'))
-             page += '%s' % lst2
-             i += 1
-         return page
+def start_mappers():
+    metadata.create_all(create_engine('sqlite:///EnglishPalDatabase.db'))#创建sqlite连接
+    mapper(model.User, users)#初始化model参数，下同
+    mapper(model.NewWord, newwords)
+    mapper(model.Article, articles)
+    mapper(model.Reading, readings)
 
-5.Lab.py:
+
+
+2.services.py:
 
 ::
 
-     # -*- coding: utf-8 -*-
-     """
-     Created on Mon Jun  3 15:42:51 2019
-
-     @author: Administrator
-     """
-
-     from flask import Flask, request
-     from UseSqlite import InsertQuery
-     from datetime import datetime
-
-     from service import get_database_photos
-     from upload import upload_bp
-     from show import show_bp
-     from search import search_bp
-     from api import api_bp
-
-     app = Flask(__name__)
+# Software Architecture and Design Patterns -- Lab 3 starter code
+# An implementation of the Service Layer
+# Copyright (C) 2021 Hui Lan
 
 
+# word and its difficulty level
+WORD_DIFFICULTY_LEVEL = {'starbucks':5, 'luckin':4, 'secondcup':4, 'costa':3, 'timhortons':3, 'frappuccino':6}
 
 
-
-     @app.route('/', methods=['POST', 'GET'])
-     def main():
-         if request.method == 'POST':
-             uploaded_file = request.files['file']
-             time_str = datetime.now().strftime('%Y%m%d%H%M%S')
-             new_filename = time_str + '.jpg'
-             uploaded_file.save('./static/upload/' + new_filename)
-             time_info = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-             description = request.form['description']
-             path = './static/upload/' + new_filename
-             iq = InsertQuery('./static/RiskDB.db')
-             iq.instructions("INSERT INTO photo Values('%s','%s','%s','%s')" % (time_info, description, path, new_filename))
-             iq.do()
-             return '<p>You have uploaded %s.<br/> <a href="/">Return</a>.' % (uploaded_file.filename)
-         else:
-             page = '''
-                 <a href='/upload'>upload</a>
-                 <a href='/search'>search</a>
-                 <a href='/show'>show</a>
-                 <a href='/api'>api</a>
-             '''
-             page += get_database_photos()
-             return page
+class UnknownUser(Exception):
+    pass
 
 
-     app.register_blueprint(upload_bp)
-     app.register_blueprint(show_bp)
-     app.register_blueprint(search_bp)
-     app.register_blueprint(api_bp)
-
-     if __name__ == '__main__':
-         app.run(debug=True)
-
-6.service.py:
-
-::
-
-     from PIL import Image
-
-     from UseSqlite import RiskQuery
+class NoArticleMatched(Exception):
+    pass
 
 
-     def make_html_paragraph(s):
-         if s.strip() == '':
-             return ''
-         lst = s.split(',')
-         picture_path = lst[2].strip()
-         picture_name = lst[3].strip()
-         im = Image.open(picture_path)
-         im.thumbnail((400, 300))
-         im.save('./static/figure/' + picture_name, 'jpeg')
-         result = '<p>'
-         result += '<i>%s</i><br/>' % (lst[0])
-         result += '<i>%s</i><br/>' % (lst[1])
-         result += '<a href="%s"><img src="./static/figure/%s"alt="风景图"></a>' % (picture_path, picture_name)
-         return result + '</p>'
+def read(user, user_repo, article_repo, session):
+    u = user_repo.get(user.username)
+    if u != None or u.password == user.password:#判断用户是否存在 密码是否正确
 
+        articles = article_repo.list()#获取文章列表
+        
+        if articles == None:
+            raise NoArticleMatched()#报错
+            
+        words = session.execute(
+            'SELECT word FROM newwords WHERE username=:username',
+            dict(username=user.username),
+        )#从数据库获得用户的生词表
 
-     def make_html_photo(s):
-         if s.strip() == '':
-             return ''
-         lst = s.split(',')
-         picture_path = lst[2].strip()
-         picture_name = lst[3].strip()
-         im = Image.open(picture_path)
-         im.thumbnail((400, 300))
-         real_path = '.' + picture_path
-         result = '<p>'
-         result += '<i>%s</i><br/>' % (lst[0])
-         result += '<i>%s</i><br/>' % (lst[1])
-         result += '<a href="%s"><img src="../static/figure/%s"alt="风景图"></a>' % (real_path, picture_name)
-         return result + '</p>'
+        sum = 0
+        count = 0
+        for word in words:
+            sum += WORD_DIFFICULTY_LEVEL[word[0]]
+            count += 1
+        
+        if count == 0:
+            count = 1
 
-
-     def get_database_photos():
-         rq = RiskQuery('./static/RiskDB.db')
-         rq.instructions("SELECT * FROM photo ORDER By time desc")
-         rq.do()
-         record = '<p>My past photo</p>'
-         for r in rq.format_results().split('\n\n'):
-             record += '%s' % (make_html_paragraph(r))
-         return record + '</table>\n'
-
-
-     def get_description_photos(description):
-         rq = RiskQuery('./static/RiskDB.db')
-         rq.instructions("SELECT * FROM photo where description = '%s' " % description)
-         rq.do()
-         record = '<p>search result</p>'
-         for r in rq.format_results().split('\n\n'):
-             record += '%s' % (make_html_photo(r))
-         return record + '</table>\n'
-
-
-7.UseSqlite.py:
-
-::
-
-     # Reference: Dusty Phillips.  Python 3 Objected-oriented Programming Second Edition. Pages 326-328.
-     # Copyright (C) 2019 Hui Lan
-
-     import sqlite3
-
-     class Sqlite3Template:
-         def __init__(self, db_fname):
-             self.db_fname = db_fname
-
-         def connect(self, db_fname):
-             self.conn = sqlite3.connect(self.db_fname)
-
-         def instructions(self, query_statement):
-             raise NotImplementedError()
-
-         def operate(self):
-             self.results = self.conn.execute(self.query) # self.query is to be given in the child classes
-             self.conn.commit()
-
-         def format_results(self):
-             raise NotImplementedError()  
-
-         def do(self):
-             self.connect(self.db_fname)
-             self.instructions(self.query)
-             self.operate()
-
-
-     class InsertQuery(Sqlite3Template):
-         def instructions(self, query):
-             self.query = query
-
-
-     class RiskQuery(Sqlite3Template):
-         def instructions(self, query):
-             self.query = query
-
-         def format_results(self):
-             output = []
-             for row in self.results.fetchall():
-                 output.append(', '.join([str(i) for i in row]))
-             return '\n\n'.join(output)    
-
-
-     if __name__ == '__main__':
-
-         #iq = InsertQuery('RiskDB.db')
-         #iq.instructions("INSERT INTO inspection Values ('FoodSupplies', 'RI2019051301', '2019-05-13', '{}')")
-         #iq.do()
-         #iq.instructions("INSERT INTO inspection Values ('CarSupplies', 'RI2019051302', '2019-05-13', '{[{\"risk_name\":\"elevator\"}]}')")
-         #iq.do()
-
-         rq = RiskQuery('RiskDB.db')
-         rq.instructions("SELECT * FROM inspection WHERE inspection_serial_number LIKE 'RI20190513%'")
-         rq.do()
-         print(rq.format_results())
+        average = round(sum / count) + 1
+         #生成生词表的平均难度等级
+        while average<3:
+            average+=1
+        #如果平均难度等级<3就让它变成3
+        for article in articles:
+            if average != article.level:
+                continue
+            article_id = user.read_article(article)
+            session.add(model.Reading(username = user.username, article_id = article_id))
+            session.commit()
+            return article_id
+        #对于每一篇文章判断其生词难度等级，文章难度等级与其生词难度等级相等时返回文章
+        #session用于记录用户状态
+        raise NoArticleMatched()
+    else:
+        raise UnknownUser()
 
 
 Link of the demo video
