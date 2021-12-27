@@ -159,19 +159,14 @@ def read(user, user_repo, article_repo, session):
         raise UnknownUser()
 
 
-Link of the demo video
+Discussion
 --------
+Question:Does your function read in services.py follow the Single Respon sibility Principle (SRP) principle? 
+Answer:Yes.Because each function is implemented using different function.In this way,we successfully reduces coupling between program contents,which means that the implementation of one function minimizes dependence on other functions.Therefore, when one function fails, the other functions will not be affected.
 
-https://www.bilibili.com/video/BV113411s7Cr?spm_id_from=333.999.0.0
 
 
 References
 --------
 
 Read the Docs. https://readthedocs.org/
-
-
-
-
-
-
