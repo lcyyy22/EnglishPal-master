@@ -1,7 +1,7 @@
 The ORM Magic and The Service Layer
 ===================================
 
-Author:201932110102,201932110101,201932110109,201932110108
+Author:201932110102/201932110101/201932110109/201932110108
 
 Date:2021/12/25
 
@@ -120,7 +120,8 @@ Code
 
     def read(user, user_repo, article_repo, session):
         u = user_repo.get(user.username)
-        if u != None or u.password == user.password:#Check whether the user has a correct password
+        if u != None or u.password == user.password:
+        # Check whether the user has a correct password
 
             articles = article_repo.list()  #get artical list
 
@@ -130,7 +131,8 @@ Code
             words = session.execute(
                 'SELECT word FROM newwords WHERE username=:username',
                 dict(username=user.username),
-            ) #Get the user's list of words from the database
+            ) 
+            # Get the user's list of words from the database
 
             sum = 0
             count = 0
@@ -153,7 +155,7 @@ Code
                 session.add(model.Reading(username = user.username, article_id = article_id))
                 session.commit()
                 return article_id
-            # For each article, judge its new word difficulty level, and return to the article when the difficulty level of the article is equal to its new word difficulty level
+            # For each article judge its new word difficulty level, and return to the article when the difficulty level of the article is equal to its new word difficulty level
             #session to record the user status
             raise NoArticleMatched()
         else:
@@ -163,6 +165,7 @@ Code
 Discussion
 --------
 Question:Does your function read in services.py follow the Single Respon sibility Principle (SRP) principle? 
+
 Answer:Yes.Because each function is implemented using different function.In this way,we successfully reduces coupling between program contents,which means that the implementation of one function minimizes dependence on other functions.Therefore, when one function fails, the other functions will not be affected.
 
 
