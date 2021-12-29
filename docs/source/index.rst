@@ -88,8 +88,8 @@ Code
 
 
     def start_mappers():
-        metadata.create_all(create_engine('sqlite:///EnglishPalDatabase.db'))#创建sqlite连接
-        mapper(model.User, users)#初始化model参数，下同
+        metadata.create_all(create_engine('sqlite:///EnglishPalDatabase.db')) #create sqlite connection
+        mapper(model.User, users) #Initialize model parameters, same as below
         mapper(model.NewWord, newwords)
         mapper(model.Article, articles)
         mapper(model.Reading, readings)
@@ -119,17 +119,17 @@ Code
 
     def read(user, user_repo, article_repo, session):
         u = user_repo.get(user.username)
-        if u != None or u.password == user.password:#判断用户是否存在 密码是否正确
+        if u != None or u.password == user.password:#Check whether the user has a correct password
 
-            articles = article_repo.list()#获取文章列表
+            articles = article_repo.list()  #get artical list
 
             if articles == None:
-                raise NoArticleMatched()#报错
+                raise NoArticleMatched()  #get error
 
             words = session.execute(
                 'SELECT word FROM newwords WHERE username=:username',
                 dict(username=user.username),
-            )#从数据库获得用户的生词表
+            ) #Get the user's list of words from the database
 
             sum = 0
             count = 0
@@ -141,10 +141,10 @@ Code
                 count = 1
 
             average = round(sum / count) + 1
-             #生成生词表的平均难度等级
+           # Generate the average difficulty level of the vocabulary table
             while average<3:
                 average+=1
-            #如果平均难度等级<3就让它变成3
+           # Change it to 3 if average difficulty level <3
             for article in articles:
                 if average != article.level:
                     continue
@@ -152,8 +152,8 @@ Code
                 session.add(model.Reading(username = user.username, article_id = article_id))
                 session.commit()
                 return article_id
-            #对于每一篇文章判断其生词难度等级，文章难度等级与其生词难度等级相等时返回文章
-            #session用于记录用户状态
+            # For each article, judge its new word difficulty level, and return to the article when the difficulty level of the article is equal to its new word difficulty level
+            #session to record the user status
             raise NoArticleMatched()
         else:
             raise UnknownUser()
