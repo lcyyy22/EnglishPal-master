@@ -1,7 +1,7 @@
 The ORM Magic and The Service Layer
 ===================================
 
-Author：201932110102，201932110101，201932110109，201932110108
+Author：201932110102, 201932110101,201932110109,201932110108
 
 Date：2021/12/25
 
@@ -88,7 +88,8 @@ Code
 
 
     def start_mappers():
-        metadata.create_all(create_engine('sqlite:///EnglishPalDatabase.db')) #create sqlite connection
+        metadata.create_all(create_engine('sqlite:///EnglishPalDatabase.db'))
+        #create sqlite connection
         mapper(model.User, users) #Initialize model parameters, same as below
         mapper(model.NewWord, newwords)
         mapper(model.Article, articles)
